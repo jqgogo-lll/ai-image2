@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AetherArts AI - 智能粒子级 AI 艺术工坊</title>
+    <!-- Tailwind CSS for modern responsive designs -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter & Orbitron Fonts for futuristic tech layout -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        cyber: {
+                            50: '#f0f3ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            900: '#1e3a8a',
+                            950: '#030712'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Modern scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.6);
+        }
+        
+        /* Laser scanning effect for loading states */
+        @keyframes laserScan {
+            0% { top: 0%; opacity: 0.8; }
+            50% { top: 100%; opacity: 0.8; }
+            100% { top: 0%; opacity: 0.8; }
+        }
+        .laser-line {
+            animation: laserScan 3s linear infinite;
+        }
+
+        /* Ambient glowing circles */
+        .glow-sphere {
+            filter: blur(140px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen w-full relative overflow-x-hidden flex flex-col">
+
+    <!-- Ambient blur backdrops -->
+    <div class="absolute w-[40vw] h-[40vw] rounded-full bg-indigo-600 top-[-10vw] left-[-10vw] glow-sphere z-0"></div>
+    <div class="absolute w-[50vw] h-[50vw] rounded-full bg-fuchsia-600 bottom-[-15vw] right-[-15vw] glow-sphere z-0"></div>
+
+    <!-- Header navigation -->
+    <header class="w-full shrink-0 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md px-4 py-3 md:px-8 flex justify-between items-center z-10">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-fuchsia-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i class="fa-solid fa-wand-magic-sparkles text-lg text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-sm md:text-base font-tech font-bold tracking-wider bg-gradient-to-r from-indigo-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">AETHERARTS AI</h1>
+                <p class="text-[9px] text-slate-400 uppercase tracking-widest font-semibold">Gemini 3.1 Next-Gen Image Engine</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <!-- Active Generation Stats Counter -->
+            <div class="hidden sm:flex items-center gap-2 bg-slate-900/60 border border-slate-800/80 px-3 py-1.5 rounded-lg text-xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-slate-400">系统状态: <strong class="text-emerald-400 font-medium">就绪</strong></span>
+            </div>
+            <!-- API Key Settings Button -->
+            <button id="openApiKeyModal" class="bg-slate-900/85 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white px-3 py-1.5 rounded-xl transition duration-200 text-xs flex items-center gap-2" title="API Key Settings">
+                <i class="fa-solid fa-key"></i>
+                <span class="hidden md:inline">API 密钥设置</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full flex flex-col md:flex-row overflow-y-auto md:overflow-hidden relative z-10">
+        
+        <!-- Left panel: Control configuration drawer -->
+        <section class="w-full md:w-[380px] lg:w-[420px] shrink-0 border-r border-slate-800/80 bg-slate-950/80 backdrop-blur-sm flex flex-col md:h-full overflow-y-auto">
+            <div class="p-4 lg:p-6 space-y-6">
+                
+                <!-- Main prompt and edit field -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <i class="fa-solid fa-feather-pointed text-indigo-400"></i>
+                            创作提示词 (支持中文 & 英文)
+                        </label>
+                        <button id="enhancePromptBtn" class="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1 bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-0.5 rounded-md">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI 智能润色
+                        </button>
+                    </div>
+                    <div class="relative group">
+                        <textarea id="promptInput" rows="4" placeholder="例如：一个戴着朋克防毒面具的未来流浪猫，科技感背景，霓虹灯光，高清写实..." class="w-full bg-slate-900/80 hover:bg-slate-900 focus:bg-slate-900 border border-slate-800 group-hover:border-slate-700 focus:border-indigo-500/80 rounded-2xl p-3.5 text-xs text-slate-200 placeholder-slate-500 outline-none focus:ring-1 focus:ring-indigo-500/20 transition duration-300 resize-none"></textarea>
+                    </div>
+                </div>
+
+                <!-- Aspect Ratio selection grid -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <i class="fa-solid fa-crop text-indigo-400"></i>
+                        画面纵横比
+                    </label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button class="ratio-btn border border-indigo-500/20 bg-indigo-500/5 text-indigo-300 rounded-xl py-2 px-1 flex flex-col items-center gap-1.5 transition active" data-ratio="1:1">
+                            <span class="w-4 h-4 rounded border-2 border-current block opacity-80"></span>
+                            <span class="text-[10px] font-medium font-mono">1:1 Square</span>
+                        </button>
+                        <button class="ratio-btn border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-400 hover:text-slate-200 rounded-xl py-2 px-1 flex flex-col items-center gap-1.5 transition" data-ratio="16:9">
+                            <span class="w-6 h-3.5 rounded border-2 border-current block opacity-80"></span>
+                            <span class="text-[10px] font-medium font-mono">16:9 Cinema</span>
+                        </button>
+                        <button class="ratio-btn border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-400 hover:text-slate-200 rounded-xl py-2 px-1 flex flex-col items-center gap-1.5 transition" data-ratio="9:16">
+                            <span class="w-3.5 h-6 rounded border-2 border-current block opacity-80"></span>
+                            <span class="text-[10px] font-medium font-mono">9:16 Portrait</span>
+                        </button>
+                        <button class="ratio-btn border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-400 hover:text-slate-200 rounded-xl py-2 px-1 flex flex-col items-center gap-1.5 transition" data-ratio="4:3">
+                            <span class="w-5.5 h-4 rounded border-2 border-current block opacity-80"></span>
+                            <span class="text-[10px] font-medium font-mono">4:3 Studio</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Artistic Style Selection Grid -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <i class="fa-solid fa-palette text-indigo-400"></i>
+                        画面艺术风格
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="style-btn border border-indigo-500/20 bg-indigo-500/5 text-indigo-300 rounded-xl py-2 px-3 text-left flex items-center justify-between transition active" data-style="none">
+                            <span class="text-xs font-semibold">无预设风格</span>
+                            <i class="fa-solid fa-ban text-[10px] opacity-75"></i>
+                        </button>
+                        <button class="style-btn border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-400 hover:text-slate-200 rounded-xl py-2 px-3 text-left flex items-center justify-between transition" data-style="cinematic">
+                            <span class="text-xs font-semibold">电影写实级</span>
+                            <i class="fa-solid fa-clapperboard text-[10px] opacity-75"></i>
+                        </button>
+                        <button class="style-btn border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-400 hover:text-slate-200 rounded-xl py-2 px-3 text-left flex items-center justify-between transition" data-style="anime">
+                            <span class="text-xs font-semibold">日系二次元</span>
+                            <i class="fa-solid fa-face-smile-wink text-[10px] opacity-75"></i>
+                        </button>
+                        <button class="style-btn border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-400 hover:text-slate-200 rounded-xl py-2 px-3 text-left flex items-center justify-between transition" data-style="cyberpunk">
+                            <span class="text-xs font-semibold">赛博霓虹</span>
+                            <i class="fa-solid fa-bolt text-[10px] opacity-75"></i>
+                        </button>
+                        <button class="style-btn border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-400 hover:text-slate-200 rounded-xl py-2 px-3 text-left flex items-center justify-between transition" data-style="fantasy">
+                            <span class="text-xs font-semibold">奇幻概念</span>
+                            <i class="fa-solid fa-dragon text-[10px] opacity-75"></i>
+                        </button>
+                        <button class="style-btn border border-slate-800 bg-slate-900/50 hover:bg-slate-900 text-slate-400 hover:text-slate-200 rounded-xl py-2 px-3 text-left flex items-center justify-between transition" data-style="oilpainting">
+                            <span class="text-xs font-semibold">经典油画</span>
+                            <i class="fa-solid fa-paintbrush text-[10px] opacity-75"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-2.5 pt-2">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <i class="fa-solid fa-image text-indigo-400"></i>
+                            参考底图 (图生图)
+                        </label>
+                        <button id="clearRefImage" class="text-[10px] font-semibold text-rose-400 hover:text-rose-300 hidden">清除参考图</button>
+                    </div>
+                    <div id="imageUploadArea" class="border-2 border-dashed border-slate-800 hover:border-indigo-500/40 rounded-2xl p-4 text-center cursor-pointer transition duration-300 relative group overflow-hidden bg-slate-900/30">
+                        <input type="file" id="refImageFile" class="hidden" accept="image/*">
+                        <div id="uploadPrompt" class="space-y-1 py-1">
+                            <i class="fa-solid fa-cloud-arrow-up text-xl text-slate-500 group-hover:text-indigo-400 transition mb-1"></i>
+                            <p class="text-xs text-slate-300 font-semibold">上传参考图片</p>
+                            <p class="text-[10px] text-slate-500">将进行图像转化与重新演绎</p>
+                        </div>
+                        <div id="uploadPreview" class="hidden absolute inset-0 w-full h-full bg-slate-950">
+                            <img id="refImagePreview" class="w-full h-full object-contain" src="" alt="Reference Base">
+                            <div class="absolute inset-0 bg-slate-950/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
+                                <span class="bg-indigo-600/90 text-white text-[10px] px-2.5 py-1.5 rounded-lg shadow font-medium">更换参考图</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Tuning panel -->
+                <div class="border-t border-slate-800/60 pt-4 space-y-4">
+                    <button id="toggleAdvanced" class="w-full flex items-center justify-between text-slate-400 hover:text-slate-200 transition text-[10px] font-bold uppercase tracking-widest">
+                        <span>高级创意微调 (模拟配置)</span>
+                        <i id="advancedChevron" class="fa-solid fa-chevron-down text-[8px] transition duration-300"></i>
+                    </button>
+                    <div id="advancedControls" class="hidden space-y-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">推理步骤 (Steps)</label>
+                                <span class="text-[10px] font-mono text-indigo-400 font-bold">50</span>
+                            </div>
+                            <input type="range" min="20" max="100" step="5" value="50" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500" disabled>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">提示词引导强度 (C.G. Scale)</label>
+                                <span class="text-[10px] font-mono text-indigo-400 font-bold">7.5</span>
+                            </div>
+                            <input type="range" min="1" max="15" step="0.5" value="7.5" class="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="generateBtn" class="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-fuchsia-600 hover:from-indigo-500 hover:to-fuchsia-500 text-white rounded-2xl py-3.5 text-sm font-semibold tracking-wide shadow-xl shadow-indigo-600/20 transition-all duration-300 transform active:scale-[0.98] flex items-center justify-center gap-2 group relative overflow-hidden">
+                    <div class="absolute inset-0 w-1/2 h-full bg-white/10 skew-x-[-25deg] translate-x-[-150%] group-hover:translate-x-[250%] transition duration-1000"></div>
+                    <i class="fa-solid fa-sparkles animate-pulse"></i>
+                    <span>开始合成艺术画作</span>
+                </button>
+
+            </div>
+        </section>
+
+        <!-- Center-Right Area: Image display, status monitoring, and canvas controls -->
+        <section class="flex-1 flex flex-col h-full bg-slate-900/20 relative min-h-[450px]">
+            
+            <!-- Dynamic workspace action bar -->
+            <div class="w-full shrink-0 border-b border-slate-800/40 bg-slate-900/10 px-4 md:px-6 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-tech font-bold tracking-wide text-slate-300">ARTWORK BOARD</span>
+                    <span id="currentStatusLabel" class="hidden md:inline bg-slate-800 text-slate-400 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">PREVIEWING</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="downloadBtn" class="bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white p-2 rounded-xl transition shadow flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed" title="下载原图" disabled>
+                        <i class="fa-solid fa-download text-xs"></i>
+                    </button>
+                    <button id="copyPromptBtn" class="bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white p-2 rounded-xl transition shadow flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed" title="复制提示词" disabled>
+                        <i class="fa-solid fa-copy text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Image preview or interactive placeholder board -->
+            <div class="flex-1 w-full flex items-center justify-center p-4 md:p-8 relative overflow-hidden select-text">
+                
+                <!-- LOADING PLACEHOLDER / GENERATION ENGINE STATUS -->
+                <div id="loadingOverlay" class="hidden absolute inset-0 z-30 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+                    <div class="w-80 space-y-6">
+                        <!-- Hologram scanning frame -->
+                        <div class="w-48 h-48 rounded-2xl border border-indigo-500/20 relative overflow-hidden mx-auto bg-indigo-500/5 shadow-inner flex items-center justify-center">
+                            <i class="fa-solid fa-wand-magic-sparkles text-4xl text-indigo-400/50 animate-pulse"></i>
+                            <div class="absolute inset-x-0 h-0.5 bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,1)] laser-line opacity-0"></div>
+                        </div>
+                        <div class="space-y-2">
+                            <h3 class="text-sm font-tech font-bold text-slate-100 tracking-widest uppercase">量子像素合成中...</h3>
+                            <p class="text-xs text-indigo-400 font-semibold animate-pulse" id="loadingLog">初始化AI扩散引擎状态...</p>
+                        </div>
+                        <!-- Micro loading progress logs bar -->
+                        <div class="w-full bg-slate-900 h-1 rounded-full overflow-hidden">
+                            <div id="loadingProgress" class="w-0 h-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 transition-all duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAIN GENERATED ARTWORK DISPLAY -->
+                <div id="artworkContainer" class="max-w-full max-h-full aspect-square bg-slate-950 rounded-2xl overflow-hidden shadow-2xl shadow-indigo-950/20 border border-slate-800/50 flex items-center justify-center relative group">
+                    <img id="generatedArtwork" class="max-w-full max-h-full object-contain hidden" src="" alt="AetherArts Masterpiece">
+                    
+                    <!-- INITIAL IDLE SCREEN -->
+                    <div id="idleDisplay" class="text-center p-6 max-w-sm pointer-events-none select-none">
+                        <div class="w-16 h-16 rounded-3xl bg-indigo-950/40 border border-indigo-500/20 flex items-center justify-center mx-auto mb-6">
+                            <i class="fa-solid fa-paintbrush text-2xl text-indigo-400"></i>
+                        </div>
+                        <h2 class="text-base font-bold text-slate-200 mb-2">激发您的超维艺术想象</h2>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            在左侧输入极具张力的提示词，选择风格比例，或一键AI润色，生成电影级别的专属插画。
+                        </p>
+                    </div>
+
+                    <!-- MULTI-TURN AI IMAGE EDITING CONTROL HOVER OVERLAY -->
+                    <div id="editActionOverlay" class="hidden absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-950/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-800 shadow-2xl flex items-center gap-3 w-5/6 max-w-sm transition-transform translate-y-2 group-hover:translate-y-0 duration-300">
+                        <input id="imgEditPrompt" type="text" placeholder="修饰或改画? e.g. '加上暴风雨'" class="flex-1 bg-slate-900 border border-slate-800 focus:border-indigo-500/50 rounded-xl px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 outline-none">
+                        <button id="imgEditBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition active:scale-95 shrink-0">
+                            <i class="fa-solid fa-wand-magic"></i>
+                            <span>局部修改</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom: Persistent Local History Art Gallery Timeline -->
+            <div class="w-full shrink-0 border-t border-slate-800/40 bg-slate-950/60 p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-images text-slate-400 text-xs"></i>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">历史作品画廊</span>
+                    </div>
+                    <button id="clearHistoryBtn" class="text-[10px] font-semibold text-rose-400 hover:text-rose-300 transition">清空画廊</button>
+                </div>
+                <div id="historyTimeline" class="flex gap-3 overflow-x-auto py-1 scroll-smooth">
+                    <!-- Dynamic timeline items populate here -->
+                    <div id="historyEmpty" class="text-[10px] text-slate-600 text-center w-full py-4 font-medium italic">暂无历史创意记录</div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Custom API Key Setup Modal -->
+    <div id="apiKeyModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md shadow-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-key text-indigo-400"></i>
+                    <h3 class="font-tech font-bold text-sm tracking-wider">GEMINI API 密钥设置</h3>
+                </div>
+                <button id="closeApiKeyModal" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-3">
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    本网站默认在沙盒环境中为您自动填充可用的 API 密钥。如果您想在本地独立运行，或使用自己的专享 API 配置，可在下方输入您私有的 Gemini Key：
+                </p>
+                <div class="space-y-1.5">
+                    <input id="apiKeyInput" type="password" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2.5 text-xs text-slate-200 placeholder-slate-600 outline-none">
+                    <div class="flex items-center justify-between">
+                        <span id="keyStatusBadge" class="text-[10px] font-semibold text-slate-500">检测状态: 默认通道</span>
+                        <button id="testKeyBtn" class="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold">测试连接</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2">
+                <button id="saveApiKey" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl py-2.5 text-xs font-semibold shadow transition">保存配置</button>
+                <button id="resetApiKey" class="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl py-2.5 px-4 text-xs font-semibold transition">重置默认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating status alert message -->
+    <div id="toastMessage" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500/30 text-slate-200 px-4 py-2.5 rounded-xl shadow-2xl text-xs flex items-center gap-2 transform translate-y-[-100px] opacity-0 transition-all duration-300 pointer-events-none z-50">
+        <i class="fa-solid fa-bell text-indigo-400"></i>
+        <span id="toastText">通知服务启动</span>
+    </div>
+
+    <script>
+        // Safe sandbox wrapper for localStorage to guarantee script won't crash on high-security/iframe envs
+        const safeStorage = {
+            getItem(key) {
+                try {
+                    return localStorage.getItem(key);
+                } catch (e) {
+                    console.warn("LocalStorage access blocked by browser security settings.", e);
+                    return null;
+                }
+            },
+            setItem(key, value) {
+                try {
+                    localStorage.setItem(key, value);
+                } catch (e) {
+                    console.warn("LocalStorage write blocked by browser security settings.", e);
+                }
+            },
+            removeItem(key) {
+                try {
+                    localStorage.removeItem(key);
+                } catch (e) {
+                    console.warn("LocalStorage deletion blocked by browser security settings.", e);
+                }
+            }
+        };
+
+        // Core Web Art Studio State Machine
+        class ArtStudioSystem {
+            constructor() {
+                // DOM Binding elements
+                this.promptInput = document.getElementById('promptInput');
+                this.generateBtn = document.getElementById('generateBtn');
+                this.enhancePromptBtn = document.getElementById('enhancePromptBtn');
+                this.artworkContainer = document.getElementById('artworkContainer');
+                this.generatedArtwork = document.getElementById('generatedArtwork');
+                this.idleDisplay = document.getElementById('idleDisplay');
+                
+                this.loadingOverlay = document.getElementById('loadingOverlay');
+                this.loadingLog = document.getElementById('loadingLog');
+                this.loadingProgress = document.getElementById('loadingProgress');
+                
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.copyPromptBtn = document.getElementById('copyPromptBtn');
+                this.clearRefImageBtn = document.getElementById('clearRefImage');
+                this.imageUploadArea = document.getElementById('imageUploadArea');
+                this.refImageFile = document.getElementById('refImageFile');
+                this.refImagePreview = document.getElementById('refImagePreview');
+                this.uploadPreview = document.getElementById('uploadPreview');
+                this.uploadPrompt = document.getElementById('uploadPrompt');
+                
+                // Fine adjustments
+                this.toggleAdvanced = document.getElementById('toggleAdvanced');
+                this.advancedControls = document.getElementById('advancedControls');
+                this.advancedChevron = document.getElementById('advancedChevron');
+                
+                // Multi-turn image edit elements
+                this.editActionOverlay = document.getElementById('editActionOverlay');
+                this.imgEditPrompt = document.getElementById('imgEditPrompt');
+                this.imgEditBtn = document.getElementById('imgEditBtn');
+
+                // State variables with sandbox recovery
+                this.apiKey = safeStorage.getItem('AetherArts_Key') || "";
+                this.currentRatio = "1:1";
+                this.currentStyle = "none";
+                this.base64RefImage = null; // Image-to-Image reference
+                
+                // Multi-turn context storage
+                this.lastPromptGenerated = "";
+                this.lastModelOutput = null; // Store complete candidate content object containing image base64
+
+                // Init
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadHistory();
+                this.updateKeyStatusUI();
+            }
+
+            setupEventListeners() {
+                // Style triggers
+                document.querySelectorAll('.style-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.style-btn').forEach(b => {
+                            b.classList.remove('border-indigo-500/20', 'bg-indigo-500/5', 'text-indigo-300');
+                            b.classList.add('border-slate-800', 'bg-slate-900/50', 'text-slate-400', 'hover:text-slate-200');
+                        });
+                        btn.classList.remove('border-slate-800', 'bg-slate-900/50', 'text-slate-400', 'hover:text-slate-200');
+                        btn.classList.add('border-indigo-500/20', 'bg-indigo-500/5', 'text-indigo-300');
+                        this.currentStyle = btn.dataset.style;
+                    });
+                });
+
+                // Aspect ratio triggers
+                document.querySelectorAll('.ratio-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.ratio-btn').forEach(b => {
+                            b.classList.remove('border-indigo-500/20', 'bg-indigo-500/5', 'text-indigo-300');
+                            b.classList.add('border-slate-800', 'bg-slate-900/50', 'text-slate-400', 'hover:text-slate-200');
+                        });
+                        btn.classList.remove('border-slate-800', 'bg-slate-900/50', 'text-slate-400', 'hover:text-slate-200');
+                        btn.classList.add('border-indigo-500/20', 'bg-indigo-500/5', 'text-indigo-300');
+                        this.currentRatio = btn.dataset.ratio;
+                        this.updateArtworkRatioFrame(this.currentRatio);
+                    });
+                });
+
+                // Advanced drawer slide toggle
+                this.toggleAdvanced.addEventListener('click', () => {
+                    if (this.advancedControls.classList.contains('hidden')) {
+                        this.advancedControls.classList.remove('hidden');
+                        this.advancedChevron.classList.add('rotate-180');
+                    } else {
+                        this.advancedControls.classList.add('hidden');
+                        this.advancedChevron.classList.remove('rotate-180');
+                    }
+                });
+
+                // File Upload handler for Image-to-Image reference
+                this.imageUploadArea.addEventListener('click', () => {
+                    this.refImageFile.click();
+                });
+
+                this.refImageFile.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            this.base64RefImage = reader.result.split(',')[1];
+                            this.refImagePreview.src = reader.result;
+                            this.uploadPreview.classList.remove('hidden');
+                            this.uploadPrompt.classList.add('hidden');
+                            this.clearRefImageBtn.classList.remove('hidden');
+                            this.showToast("底图上传成功，已切换为图生图模式！", "fa-circle-check");
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                this.clearRefImageBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.base64RefImage = null;
+                    this.refImageFile.value = '';
+                    this.uploadPreview.classList.add('hidden');
+                    this.uploadPrompt.classList.remove('hidden');
+                    this.clearRefImageBtn.classList.add('hidden');
+                    this.showToast("已清除参考底图，切回文生图模式。", "fa-circle-info");
+                });
+
+                // Generate button dispatch
+                this.generateBtn.addEventListener('click', () => this.generateArtAction());
+
+                // Enhance prompt with standard Gemini flash model
+                this.enhancePromptBtn.addEventListener('click', () => this.enhanceUserPrompt());
+
+                // Download & Copy action bindings
+                this.downloadBtn.addEventListener('click', () => this.downloadArtwork());
+                this.copyPromptBtn.addEventListener('click', () => this.copyPromptToClipboard());
+
+                // Multi-turn incremental image edit execution
+                this.imgEditBtn.addEventListener('click', () => this.editArtworkAction());
+                this.imgEditPrompt.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') this.editArtworkAction();
+                });
+
+                // Modal view bindings
+                const openModalBtn = document.getElementById('openApiKeyModal');
+                const closeModalBtn = document.getElementById('closeApiKeyModal');
+                const apiKeyModal = document.getElementById('apiKeyModal');
+                const saveApiKeyBtn = document.getElementById('saveApiKey');
+                const resetApiKeyBtn = document.getElementById('resetApiKey');
+                const apiKeyInput = document.getElementById('apiKeyInput');
+
+                openModalBtn.addEventListener('click', () => {
+                    apiKeyInput.value = this.apiKey;
+                    apiKeyModal.classList.remove('hidden');
+                });
+
+                closeModalBtn.addEventListener('click', () => {
+                    apiKeyModal.classList.add('hidden');
+                });
+
+                saveApiKeyBtn.addEventListener('click', () => {
+                    this.apiKey = apiKeyInput.value.trim();
+                    safeStorage.setItem('AetherArts_Key', this.apiKey);
+                    apiKeyModal.classList.add('hidden');
+                    this.updateKeyStatusUI();
+                    this.showToast("API 密钥配置已安全更新！", "fa-check-double");
+                });
+
+                resetApiKeyBtn.addEventListener('click', () => {
+                    this.apiKey = "";
+                    safeStorage.removeItem('AetherArts_Key');
+                    apiKeyInput.value = "";
+                    apiKeyModal.classList.add('hidden');
+                    this.updateKeyStatusUI();
+                    this.showToast("已重置为系统内置 API 通道。", "fa-rotate-left");
+                });
+
+                document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+                    if (confirm("确定要清空您的个人画廊吗？此操作无法撤销。")) {
+                        safeStorage.removeItem('AetherArts_History');
+                        this.loadHistory();
+                        this.showToast("历史画廊已被清空。", "fa-trash");
+                    }
+                });
+            }
+
+            // Updates aspect ratio CSS styles for dynamic centering frame matches
+            updateArtworkRatioFrame(ratio) {
+                const parts = ratio.split(':');
+                const widthRatio = parseInt(parts[0]);
+                const heightRatio = parseInt(parts[1]);
+                
+                this.artworkContainer.style.aspectRatio = `${widthRatio}/${heightRatio}`;
+                this.artworkContainer.style.width = widthRatio > heightRatio ? '100%' : 'auto';
+                this.artworkContainer.style.height = heightRatio > widthRatio ? '100%' : 'auto';
+            }
+
+            // UI state updater for visual loaders
+            startLoadingState(initialText) {
+                this.loadingOverlay.classList.remove('hidden');
+                this.loadingLog.innerText = initialText;
+                this.loadingProgress.style.width = '10%';
+                
+                // Interactive lasers
+                const laser = this.loadingOverlay.querySelector('.laser-line');
+                laser.classList.remove('opacity-0');
+
+                // Mock progressive states
+                this.loadingTimer = setTimeout(() => {
+                    this.loadingLog.innerText = "检索扩散神经层算力中...";
+                    this.loadingProgress.style.width = '35%';
+                }, 1500);
+
+                this.loadingTimer2 = setTimeout(() => {
+                    this.loadingLog.innerText = "逆扩散去噪中 (Denoising)...";
+                    this.loadingProgress.style.width = '68%';
+                }, 3500);
+
+                this.loadingTimer3 = setTimeout(() => {
+                    this.loadingLog.innerText = "正在通过高阶渲染放大算法升华画作细节...";
+                    this.loadingProgress.style.width = '88%';
+                }, 6000);
+            }
+
+            stopLoadingState() {
+                clearTimeout(this.loadingTimer);
+                clearTimeout(this.loadingTimer2);
+                clearTimeout(this.loadingTimer3);
+                this.loadingOverlay.classList.add('hidden');
+                this.loadingProgress.style.width = '0%';
+                
+                const laser = this.loadingOverlay.querySelector('.laser-line');
+                laser.classList.add('opacity-0');
+            }
+
+            // Enhance prompts using gemini-3-flash
+            async enhanceUserPrompt() {
+                const userPrompt = this.promptInput.value.trim();
+                if (!userPrompt) {
+                    this.showToast("请先输入一些基本的提示词构想！", "fa-exclamation");
+                    return;
+                }
+
+                this.startLoadingState("AI 创意构思师正在为你构思细节...");
+                
+                const systemPrompt = "你是一个顶级 AI 艺术指导。将用户输入的画作提示词，重塑、丰富并扩写为极其生动、极具画面质感和视觉叙事张力的专业 AI 生图提示词。必须融合镜头光影、环境材质、构图等细节。不超过 60 字，只返回重写后的生图提示词本身，不需要任何多余解释。";
+                const userQuery = `优化并美化此提示词："${userPrompt}"`;
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${this.apiKey}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    }
+                };
+
+                try {
+                    const response = await this.fetchWithRetry(url, payload);
+                    const result = await response.json();
+                    const enhancedText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                    if (enhancedText) {
+                        this.promptInput.value = enhancedText.trim();
+                        this.showToast("提示词已升华为大师级品质！", "fa-wand-magic-sparkles");
+                    } else {
+                        throw new Error("无返回结果");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    this.showToast("智能润色通道繁忙，请稍后再试或直接生成。", "fa-triangle-exclamation");
+                } finally {
+                    this.stopLoadingState();
+                }
+            }
+
+            // Text-to-Image & Image-to-Image generation logic
+            async generateArtAction() {
+                const basePrompt = this.promptInput.value.trim();
+                if (!basePrompt) {
+                    this.showToast("输入框中还没有提示词构思呢！", "fa-exclamation");
+                    return;
+                }
+
+                // Append preset style adjustments to final prompt
+                let styleAppendString = "";
+                switch (this.currentStyle) {
+                    case "cinematic":
+                        styleAppendString = ", photorealistic cinematic rendering, dramatic shadows, volumetric rays, 8k depth of field";
+                        break;
+                    case "anime":
+                        styleAppendString = ", anime masterpiece aesthetic, vibrant gorgeous key art illustration, highly detailed, expressive";
+                        break;
+                    case "cyberpunk":
+                        styleAppendString = ", futuristic cyberpunk metropolis, bright neon pink and cyan emission glows, rain-soaked reflections, high tech sci-fi";
+                        break;
+                    case "fantasy":
+                        styleAppendString = ", deep fantasy wonderland atmosphere, enchanting conceptual illustrations, ethereal golden hour magic, fairytale";
+                        break;
+                    case "oilpainting":
+                        styleAppendString = ", classical texture oil painting strokes, rich brush impasto canvas, fine art masterpiece, warm dramatic colors";
+                        break;
+                }
+
+                const fullPrompt = basePrompt + styleAppendString;
+                this.startLoadingState("开始生成量子图像元结构...");
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${this.apiKey}`;
+                let payload;
+
+                if (this.base64RefImage) {
+                    // Image-to-Image edit structure
+                    payload = {
+                        contents: [{
+                            role: "user",
+                            parts: [
+                                { text: fullPrompt },
+                                {
+                                    inlineData: {
+                                        mimeType: "image/png",
+                                        data: this.base64RefImage
+                                    }
+                                }
+                            ]
+                        }],
+                        generationConfig: {
+                            responseModalities: ['IMAGE']
+                        }
+                    };
+                } else {
+                    // Normal text-to-image
+                    payload = {
+                        contents: [{
+                            role: 'user',
+                            parts: [{ text: fullPrompt }]
+                        }],
+                        generationConfig: {
+                            responseModalities: ['IMAGE'],
+                            imageConfig: { aspectRatio: this.currentRatio }
+                        }
+                    };
+                }
+
+                try {
+                    const response = await this.fetchWithRetry(url, payload);
+                    const result = await response.json();
+                    
+                    const candidate = result?.candidates?.[0];
+                    const part = candidate?.content?.parts?.find(p => p.inlineData);
+                    
+                    if (part && part.inlineData?.data) {
+                        const mimeType = part.inlineData.mimeType;
+                        const data = part.inlineData.data;
+                        const imageUrl = `data:${mimeType};base64,${data}`;
+
+                        // Store values to allow subsequent edits
+                        this.lastPromptGenerated = basePrompt;
+                        this.lastModelOutput = candidate.content; // Save the model turn including thought signature
+
+                        // Render on preview board
+                        this.displayArtwork(imageUrl);
+                        this.saveToHistory(imageUrl, basePrompt);
+                        this.showToast("您的史诗级艺术作品合成完毕！", "fa-palette");
+                    } else {
+                        throw new Error("接口返回结构非预期");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    this.showToast("生图服务暂时遇到阻碍，请检查您的 API Key 或稍后重试。", "fa-triangle-exclamation");
+                } finally {
+                    this.stopLoadingState();
+                }
+            }
+
+            // Multi-turn conversational Image Editing
+            async editArtworkAction() {
+                const editPromptText = this.imgEditPrompt.value.trim();
+                if (!editPromptText) {
+                    this.showToast("请输入您的改画/修饰指令！", "fa-exclamation");
+                    return;
+                }
+
+                if (!this.lastModelOutput || !this.lastPromptGenerated) {
+                    this.showToast("没有检测到合法的初始生成画面，请先进行一次基础生图！", "fa-circle-xmark");
+                    return;
+                }
+
+                this.startLoadingState("多轮局部重绘扩散计算中...");
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${this.apiKey}`;
+
+                // Multi-turn payloads using previous history
+                const payload = {
+                    contents: [
+                        {
+                            role: 'user',
+                            parts: [{ text: this.lastPromptGenerated }]
+                        },
+                        this.lastModelOutput, // model's previous generation with image details
+                        {
+                            role: 'user',
+                            parts: [{ text: editPromptText }]
+                        }
+                    ],
+                    generationConfig: {
+                        responseModalities: ['IMAGE'],
+                        imageConfig: { aspectRatio: this.currentRatio }
+                    }
+                };
+
+                try {
+                    const response = await this.fetchWithRetry(url, payload);
+                    const result = await response.json();
+                    
+                    const candidate = result?.candidates?.[0];
+                    const part = candidate?.content?.parts?.find(p => p.inlineData);
+                    
+                    if (part && part.inlineData?.data) {
+                        const mimeType = part.inlineData.mimeType;
+                        const data = part.inlineData.data;
+                        const imageUrl = `data:${mimeType};base64,${data}`;
+
+                        // Update current edit points
+                        this.lastPromptGenerated = `${this.lastPromptGenerated} (Edit: ${editPromptText})`;
+                        this.lastModelOutput = candidate.content;
+
+                        this.displayArtwork(imageUrl);
+                        this.saveToHistory(imageUrl, this.lastPromptGenerated);
+                        this.imgEditPrompt.value = ""; // Clear edit line
+                        this.showToast("图像多轮微调重合成功！", "fa-sparkles");
+                    } else {
+                        throw new Error("编辑未成功返回有效图像");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    this.showToast("多轮重绘通道错误，请重试或重置重新绘画。", "fa-triangle-exclamation");
+                } finally {
+                    this.stopLoadingState();
+                }
+            }
+
+            // Displays output imagery smoothly on board
+            displayArtwork(url) {
+                this.generatedArtwork.src = url;
+                this.generatedArtwork.classList.remove('hidden');
+                this.idleDisplay.classList.add('hidden');
+                
+                // Toggle edit actions UI overlay block
+                this.editActionOverlay.classList.remove('hidden');
+                this.downloadBtn.removeAttribute('disabled');
+                this.copyPromptBtn.removeAttribute('disabled');
+            }
+
+            // Fetch operations with backoff retries
+            async fetchWithRetry(url, options, retries = 3, delay = 1000) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(options)
+                    });
+                    
+                    if (!response.ok) {
+                        if (response.status === 429 && retries > 0) {
+                            console.warn(`Rate limited. Retrying in ${delay}ms...`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            return this.fetchWithRetry(url, options, retries - 1, delay * 2);
+                        }
+                        throw new Error(`HTTP Error Status: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (retries > 0) {
+                        console.warn(`Fetch error. Retrying in ${delay}ms...`, error);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return this.fetchWithRetry(url, options, retries - 1, delay * 2);
+                    }
+                    throw error;
+                }
+            }
+
+            // Saves generated works into local storage galleries
+            saveToHistory(base64Url, prompt) {
+                let history = [];
+                try {
+                    history = JSON.parse(safeStorage.getItem('AetherArts_History')) || [];
+                } catch (e) {
+                    history = [];
+                }
+
+                // Keep storage clean from limits
+                if (history.length >= 10) {
+                    history.pop(); // Remove oldest record
+                }
+
+                history.unshift({
+                    id: Date.now(),
+                    image: base64Url,
+                    prompt: prompt,
+                    ratio: this.currentRatio
+                });
+
+                safeStorage.setItem('AetherArts_History', JSON.stringify(history));
+                this.loadHistory();
+            }
+
+            // Repopulates timeline with saved assets
+            loadHistory() {
+                const timeline = document.getElementById('historyTimeline');
+                const empty = document.getElementById('historyEmpty');
+                let history = [];
+                
+                try {
+                    history = JSON.parse(safeStorage.getItem('AetherArts_History')) || [];
+                } catch (e) {
+                    history = [];
+                }
+
+                // Clear but protect placeholders
+                timeline.innerHTML = '';
+                if (history.length === 0) {
+                    timeline.appendChild(empty);
+                    return;
+                }
+
+                history.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-slate-800/80 hover:border-indigo-500 cursor-pointer transition relative group";
+                    card.innerHTML = `
+                        <img class="w-full h-full object-cover" src="${item.image}" alt="History Item">
+                        <div class="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition duration-200">
+                            <i class="fa-solid fa-eye text-white text-[10px]"></i>
+                        </div>
+                    `;
+                    
+                    card.addEventListener('click', () => {
+                        this.promptInput.value = item.prompt;
+                        this.currentRatio = item.ratio;
+                        this.updateArtworkRatioFrame(this.currentRatio);
+                        
+                        // Set ratio button visual trigger
+                        document.querySelectorAll('.ratio-btn').forEach(b => {
+                            if (b.dataset.ratio === item.ratio) {
+                                b.classList.add('border-indigo-500/20', 'bg-indigo-500/5', 'text-indigo-300');
+                            } else {
+                                b.classList.remove('border-indigo-500/20', 'bg-indigo-500/5', 'text-indigo-300');
+                                b.classList.add('border-slate-800', 'bg-slate-900/50', 'text-slate-400');
+                            }
+                        });
+
+                        this.displayArtwork(item.image);
+                        // Also restore this item as potential edit baseline
+                        this.lastPromptGenerated = item.prompt;
+                        this.lastModelOutput = {
+                            role: 'model',
+                            parts: [{
+                                inlineData: {
+                                    mimeType: "image/png",
+                                    data: item.image.split(',')[1]
+                                }
+                            }]
+                        };
+
+                        this.showToast("已成功从画廊载入历史作品画布！", "fa-circle-arrow-down");
+                    });
+
+                    timeline.appendChild(card);
+                });
+            }
+
+            // Allows clients to download outputs
+            downloadArtwork() {
+                const src = this.generatedArtwork.src;
+                if (!src) return;
+
+                const link = document.createElement('a');
+                link.href = src;
+                link.download = `AetherArts_${Date.now()}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                this.showToast("原图已经顺利保存在您的本地储存！", "fa-floppy-disk");
+            }
+
+            // Safe copy support in Sandbox frames
+            copyPromptToClipboard() {
+                const textToCopy = this.promptInput.value;
+                if (!textToCopy) return;
+
+                const tempInput = document.createElement('textarea');
+                tempInput.value = textToCopy;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                
+                try {
+                    document.execCommand('copy');
+                    this.showToast("提示词已完美复制到您的剪贴板！", "fa-clipboard-user");
+                } catch (e) {
+                    this.showToast("复制失败，您的浏览器拒绝了操作权限。", "fa-triangle-exclamation");
+                }
+                
+                document.body.removeChild(tempInput);
+            }
+
+            // Toast feedback alerts
+            showToast(msg, iconClass) {
+                const toast = document.getElementById('toastMessage');
+                const toastText = document.getElementById('toastText');
+                
+                toastText.innerText = msg;
+                toast.querySelector('i').className = `fa-solid ${iconClass} text-indigo-400`;
+                
+                toast.classList.remove('opacity-0', 'translate-y-[-100px]');
+                toast.classList.add('opacity-100', 'translate-y-0');
+
+                if (this.toastTimeout) clearTimeout(this.toastTimeout);
+                this.toastTimeout = setTimeout(() => {
+                    toast.classList.remove('opacity-100', 'translate-y-0');
+                    toast.classList.add('opacity-0', 'translate-y-[-100px]');
+                }, 2800);
+            }
+
+            updateKeyStatusUI() {
+                const badge = document.getElementById('keyStatusBadge');
+                if (this.apiKey) {
+                    badge.innerText = "检测状态: 尊享独立密钥";
+                    badge.className = "text-[10px] font-semibold text-indigo-400";
+                } else {
+                    badge.innerText = "检测状态: 系统内置通道";
+                    badge.className = "text-[10px] font-semibold text-slate-500";
+                }
+            }
+        }
+
+        // On system load, boot setup
+        window.onload = function() {
+            window.artStudio = new ArtStudioSystem();
+        }
+    </script>
+</body>
+</html>
